@@ -1,5 +1,4 @@
 export type AsyncResult<A, E> =
-  | { readonly type: "initial" }
   | { readonly type: "loading" }
   | { readonly type: "error"; readonly error: E }
   | { readonly type: "success"; readonly value: A };
@@ -31,11 +30,7 @@ export const ap =
       return { type: "error", error: fab.error };
     }
 
-    if (fa.type === "loading" || fab.type === "loading") {
-      return { type: "loading" };
-    }
-
-    return { type: "initial" };
+    return { type: "loading" };
   };
 
 export const chain =
@@ -60,9 +55,5 @@ export const chain =
       return { type: "error", error: fa.error };
     }
 
-    if (fa.type === "loading") {
-      return { type: "loading" };
-    }
-
-    return { type: "initial" };
+    return { type: "loading" };
   };

@@ -1,18 +1,9 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useSyncExternalStore,
-} from "react";
+import { createContext, useContext, useMemo } from "react";
 import { success } from "./result";
 import { pipe } from "./pipe";
 import * as Q from "./query";
-import * as S from "./stream";
-import * as AR from "./async-result";
 import * as RD from "./remote-data";
+import { useStream } from "./use-stream";
 
 const context: RD.QueryContext = { cache: new Map() };
 
@@ -23,30 +14,7 @@ function useQuery<A, E>(query: Q.Query<A, E, RD.QueryContext>) {
   const stream = useMemo(() => {
     return query(context);
   }, [query, context]);
-
-  const getSnapshot = useCallback(() => {
-    return stream.getValue();
-  }, [stream]);
-
-  const subscribe = useCallback(
-    (cb: () => void) => {
-      return stream.subscribe((value) => {
-        cb();
-      });
-    },
-    [stream]
-  );
-  const result = useSyncExternalStore(subscribe, getSnapshot);
-
-  const ref = useRef(result);
-
-  useEffect(() => {
-    if (result !== ref.current) {
-      ref.current = result;
-    }
-  }, [result]);
-
-  return result;
+  return useStream(stream);
 }
 
 const fetchHello = RD.mkQuery("foo", () => Promise.resolve(success("hello ")));

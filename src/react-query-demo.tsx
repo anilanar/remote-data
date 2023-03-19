@@ -1,56 +1,33 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useSyncExternalStore,
-} from "react";
+import { useMemo } from "react";
 import { QueryClient } from "@tanstack/query-core";
 import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { success } from "./result";
 import { pipe } from "./pipe";
 import * as Q from "./query";
 import * as RQ from "./react-query";
+import { useStream } from "./use-stream";
 
 function useQuery<A, E>(query: Q.Query<A, E, RQ.QueryContext>) {
   const context = useQueryClient();
   const stream = useMemo(() => {
     return query({ queryClient: context });
   }, [query, context]);
-
-  const getSnapshot = useCallback(() => {
-    return stream.getValue();
-  }, [stream]);
-
-  const subscribe = useCallback(
-    (cb: () => void) => {
-      return stream.subscribe((value) => {
-        cb();
-      });
-    },
-    [stream]
-  );
-  const result = useSyncExternalStore(subscribe, getSnapshot);
-
-  const ref = useRef(result);
-
-  useEffect(() => {
-    if (result !== ref.current) {
-      ref.current = result;
-    }
-  }, [result]);
-
-  return result;
+  return useStream(stream);
 }
 
 const fetchHello = RQ.mkQuery({
   queryKey: ["foo"],
-  queryFn: () => Promise.resolve("hello "),
+  queryFn: () =>
+    Promise.resolve({
+      hello: "hello ",
+    }),
 });
 
 const fetchTheManWhoSoldTheWorld = RQ.mkQuery({
   queryKey: ["bar"],
-  queryFn: () => Promise.resolve("the man who sold the world"),
+  queryFn: () =>
+    Promise.resolve({
+      theMan: "the man who sold the world",
+    }),
 });
 
 const pp = pipe(
@@ -58,7 +35,7 @@ const pp = pipe(
   Q.ap(
     pipe(
       fetchTheManWhoSoldTheWorld,
-      Q.map((a) => (b) => `ap ${b} ${a}`)
+      Q.map((a) => (b) => ({ result: `ap ${b.hello} ${a.theMan}` }))
     )
   )
 );
@@ -68,7 +45,7 @@ const s = pipe(
   Q.chain((a) =>
     pipe(
       fetchTheManWhoSoldTheWorld,
-      Q.map((b) => `chain ${a} ${b}`)
+      Q.map((b) => ({ result: `chain ${a.hello} ${b.theMan}` }))
     )
   )
 );
@@ -91,13 +68,14 @@ const Content = () => {
   return (
     <main>
       <p>
-        {single.type} {single.type === "success" ? single.value : ""}
+        {single.type} {single.type === "success" ? single.value.hello : ""}
       </p>
       <p>
-        {parallel.type} {parallel.type === "success" ? parallel.value : ""}
+        {parallel.type}{" "}
+        {parallel.type === "success" ? parallel.value.result : ""}
       </p>
       <p>
-        {serial.type} {serial.type === "success" ? serial.value : ""}
+        {serial.type} {serial.type === "success" ? serial.value.result : ""}
       </p>
     </main>
   );
