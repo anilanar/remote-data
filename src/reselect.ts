@@ -18,11 +18,27 @@ export interface CreateSelectorFunction {
     ]
   ): OutputSelector<Selectors, A, E>;
 
-  /** Input selectors as a separate array */
-  <Selectors extends SelectorArray, A, E>(
-    selectors: [...Selectors],
-    combiner: (
+  //   /** Input selectors as a separate array */
+  //   <Selectors extends SelectorArray, A, E>(
+  //     selectors: [...Selectors],
+  //     combiner: (
+  //       ...args: SelectorResultArray<Selectors>
+  //     ) => Q.Query<A, E, GetStateFromSelectors<Selectors>>
+  //   ): OutputSelector<Selectors, A, E>;
+}
+
+export const createSelector = <Selectors extends SelectorArray, A, E>(
+  ...args: [
+    ...Selectors,
+    (
       ...args: SelectorResultArray<Selectors>
     ) => Q.Query<A, E, GetStateFromSelectors<Selectors>>
-  ): OutputSelector<Selectors, A, E>;
-}
+  ]
+) => {
+  const selectors = args.slice(0, -1) as unknown as Selectors;
+  const combiner = args[args.length - 1] as unknown as (
+    ...args: SelectorResultArray<Selectors>
+  ) => Q.Query<A, E, GetStateFromSelectors<Selectors>>;
+
+
+};
