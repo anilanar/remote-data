@@ -12,11 +12,13 @@ export const mkQuery =
   (context) => {
     const observer = new RQC.QueryObserver(context.queryClient, queryOptions);
     return S.mkStream(
-      queryResultToAsyncResult(observer.getCurrentResult()),
-      (emit) =>
-        observer.subscribe((queryResult) => {
-          emit(queryResultToAsyncResult(queryResult));
-        })
+      () => queryResultToAsyncResult(observer.getCurrentResult()),
+      (emit) => () => {
+        const unsubscribe = observer.subscribe((queryResult) => {
+          emit(queryResultToAsyncResult(queryResult))();
+        });
+        return { unsubscribe };
+      }
     );
   };
 

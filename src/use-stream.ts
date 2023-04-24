@@ -1,28 +1,35 @@
-import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import * as S from "./stream";
 
 export const useStream = <A>(stream: S.Stream<A>) => {
+  const [streamInternals] = useState(() => stream());
+
+  useEffect(() => {
+    () => {
+      streamInternals.destroy();
+    };
+  }, [streamInternals]);
+
   const getSnapshot = useCallback(() => {
-    return stream.getValue();
+    return streamInternals.getValue();
   }, [stream]);
 
   const subscribe = useCallback(
     (cb: () => void) => {
-      return stream.subscribe(() => {
+      const { unsubscribe } = streamInternals.subscribe((_) => () => {
         cb();
-      });
+      })();
+      return unsubscribe;
     },
     [stream]
   );
   const result = useSyncExternalStore(subscribe, getSnapshot);
-
-  const ref = useRef(result);
-
-  useEffect(() => {
-    if (result !== ref.current) {
-      ref.current = result;
-    }
-  }, [result]);
 
   return result;
 };

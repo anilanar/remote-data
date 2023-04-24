@@ -1,12 +1,14 @@
-import { pipe } from "./pipe";
 import * as S from "./stream";
 import * as AR from "./async-result";
+import { pipe } from "fp-ts/lib/function";
+import {} from "fp-ts/Reader";
+
 export type Query<A, E, R> = (context: R) => S.Stream<AR.AsyncResult<A, E>>;
 
 export const of =
-  <A>(value: A) =>
+  <A, E, R>(value: A): Query<A, E, R> =>
   () =>
-    S.of(value);
+    S.of(AR.of(value));
 
 export const map =
   <A, B>(f: (a: A) => B) =>
@@ -36,13 +38,30 @@ export const chain =
     return (context) =>
       pipe(
         fa(context),
-        S.map((ga) =>
+        S.chain((ga) =>
           pipe(
             ga,
             AR.map((a) => f(a)(context)),
             (ar) => (ar.type !== "success" ? S.of(ar) : ar.value)
           )
-        ),
-        S.chain((x) => x)
+        )
       );
+  };
+
+export const traverseArray =
+  <A, B, E, R>(f: (a: A) => Query<B, E, R>) =>
+  (ta: A[]): Query<B[], E, R> => {
+    return ta.reduce<Query<B[], E, R>>(
+      (acc, a) =>
+        pipe(
+          f(a),
+          ap(
+            pipe(
+              acc,
+              map((bs) => (b: B) => [...bs, b])
+            )
+          )
+        ),
+      of<B[], E, R>([])
+    );
   };

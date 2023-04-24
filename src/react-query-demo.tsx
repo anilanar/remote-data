@@ -1,10 +1,10 @@
 import { useMemo } from "react";
 import { QueryClient } from "@tanstack/query-core";
 import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { pipe } from "./pipe";
 import * as Q from "./query";
 import * as RQ from "./react-query";
 import { useStream } from "./use-stream";
+import { pipe } from "fp-ts/function";
 
 function useQuery<A, E>(query: Q.Query<A, E, RQ.QueryContext>) {
   const context = useQueryClient();

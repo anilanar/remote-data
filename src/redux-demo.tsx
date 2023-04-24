@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { pipe } from "./pipe";
+import { pipe } from "fp-ts/function";
 import * as Q from "./query";
 import * as RX from "./redux";
 import { createStore } from "redux";
